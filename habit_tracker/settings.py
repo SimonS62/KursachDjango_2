@@ -8,12 +8,13 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "ENGINE": 'django.db.backends.postgresql',
         "NAME": os.getenv("DATABASE_NAME"),
         "USER": os.getenv("DATABASE_USER"),
         "PASSWORD": os.getenv("DATABASE_PASSWORD"),
         "HOST": os.getenv("DATABASE_HOST"),
         "PORT": os.getenv("DATABASE_PORT", "5432"),
+        "OPTIONS": {'client_encoding': 'UTF8'},
     }
 }
 
@@ -51,9 +52,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'users',
+    'habits',
+    'telegram_bot',
     'rest_framework',
     'rest_framework.authtoken',
-
+    'django_filters',
+    'corsheaders',
+    'rest_framework_simplejwt',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -65,17 +72,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'core',
-    'users',
-    'habits',
-    'telegram_bot',
-    'rest_framework',
-    'rest_framework.authtoken',
-    'corsheaders',
-    'rest_framework_simplejwt',
-    'drf_spectacular',
-    'drf_spectacular_plugin_serializer',
-    'django_filters',
 ]
 
 ROOT_URLCONF = 'habit_tracker.urls'
@@ -97,16 +93,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'habit_tracker.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        "ENGINE": 'django.db.backends.sqlite3',
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
 
 
 # Password validation
@@ -177,7 +163,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    '<http://localhost:8000>',
+    'http://localhost:8000',
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -207,7 +193,7 @@ CELERY_TASK_TIME_LIMIT = 30 * 60
 # Настройки для Celery
 CELERY_BEAT_SCHEDULE = {
     'task-name': {
-        'task': 'myapp.tasks.my_task',  # Путь к задаче
+        'task': 'habits.tasks.send_habit_reminder',  # Путь к задаче
         'schedule': timedelta(minutes=10),  # Расписание выполнения задачи (например, каждые 10 минут)
     },
 }

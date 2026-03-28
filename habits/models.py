@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 
 
 class Habit(models.Model):
+    objects = None
     DoesNotExist = None
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
     action = models.CharField(max_length=255, verbose_name="Действие") # Пример verbose_name

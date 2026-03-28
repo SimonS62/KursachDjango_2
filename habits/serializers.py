@@ -28,10 +28,28 @@ def update(self, instance, validated_data):
     # instance.clean() # Проверим, является ли модифицированный экземпляр валидным
     return super().update(instance, validated_data)
 
-    class PublicHabitSerializer(serializers.ModelSerializer):
-        user = serializers.ReadOnlyField(source='user.username')
+class Meta:
+    model = Habit
+    fields = ('id', 'action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
+    read_only_fields = ('action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
 
+class PublicHabitSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для отображения публичной информации о привычке.
+    Можно настроить, какие поля будут видны.
+    """
     class Meta:
         model = Habit
-        fields = ('id', 'action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
-        read_only_fields = ('action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
+        # Здесь мы перечисляем поля, которые хотим сделать "публичными"
+        # Например, можно включить название, описание, но не ID пользователя или дату создания/обновления.
+        fields = [
+            'id', # ID привычки, чтобы можно было на нее ссылаться
+            'name',
+            'description',
+            'is_active',
+            # 'user', # Обычно ID пользователя не делают публичным, если это не нужно
+            # 'created_at', # Даты иногда делают публичными, иногда нет
+            # 'updated_at',
+        ]
+        # Или, если вы хотите включить все поля, кроме некоторых:
+        # exclude = ['user', 'created_at', 'updated_at'] # Пример исключения полей
