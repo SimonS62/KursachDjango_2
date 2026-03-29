@@ -1,55 +1,40 @@
-import serializers
 from rest_framework import serializers
 from .models import Habit
 
 
 class HabitSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username') # Только для чтения, чтобы не показывать ID
-    # related_habit = serializers.PrimaryKeyRelatedField(queryset=Habit.objects.filter(is_pleasant=True)) # Если хотите управлять через PKclass Meta:
-    model = Habit
-    fields = '__all__' # Или перечислите нужные поля
-    read_only_fields = ('user', 'last_done', 'streak') # Поля, которые не должны редактироваться через API
+    # Поле user только для чтения, чтобы показывать имя пользователя
+    user = serializers.ReadOnlyField(source='user.username')
 
-def create(self, validated_data):
-    # Связываем привычку с текущим пользователем
-    validated_data['user'] = self.context['request'].user
-    return super().create(validated_data)
+    class Meta:
+        model = Habit
+        fields = '__all__'
+        # Поля, которые нельзя менять через API вручную
+        read_only_fields = ('user', 'last_done', 'streak')
 
-# Переопределение create и update для валидации при сохранении
-def validate(self, data):
-    # Если вы хотите, чтобы валидаторы модели работали на уровне API,
-    # можно вызвать instance.clean() здесь, но лучше использовать валидаторы DRF
-    instance = Habit(**data) # Создаем временный экземпляр для clean()
-    instance.clean() # Вызываем валидацию модели
-    return data
+    def validate(self, data):
+        """
+        Вызываем валидацию clean() из модели Habit,
+        чтобы бизнес-логика проверялась и в API.
+        """
+        # Создаем временный объект для проверки (не сохраняя в БД)
+        instance = Habit(**data)
+        instance.clean()
+        return data
 
-def update(self, instance, validated_data):
-    # Валидация при обновлении
-    # instance.clean() # Проверим, является ли модифицированный экземпляр валидным
-    return super().update(instance, validated_data)
+    def create(self, validated_data):
+        # Привязываем привычку к текущему пользователю из запроса
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
-class Meta:
-    model = Habit
-    fields = ('id', 'action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
-    read_only_fields = ('action', 'time', 'reward', 'is_pleasant', 'related_habit', 'is_public', 'user')
 
 class PublicHabitSerializer(serializers.ModelSerializer):
     """
-    Сериализатор для отображения публичной информации о привычке.
-    Можно настроить, какие поля будут видны.
+    Сериализатор для отображения только публичных привычек.
     """
     class Meta:
         model = Habit
-        # Здесь мы перечисляем поля, которые хотим сделать "публичными"
-        # Например, можно включить название, описание, но не ID пользователя или дату создания/обновления.
         fields = [
-            'id', # ID привычки, чтобы можно было на нее ссылаться
-            'name',
-            'description',
-            'is_active',
-            # 'user', # Обычно ID пользователя не делают публичным, если это не нужно
-            # 'created_at', # Даты иногда делают публичными, иногда нет
-            # 'updated_at',
+            'id', 'action', 'time', 'location',
+            'is_pleasant', 'periodicity', 'duration'
         ]
-        # Или, если вы хотите включить все поля, кроме некоторых:
-        # exclude = ['user', 'created_at', 'updated_at'] # Пример исключения полей

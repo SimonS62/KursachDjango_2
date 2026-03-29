@@ -9,16 +9,20 @@ class UserTests(APITestCase):
 
     def setUp(self):
         """Настройка тестового окружения."""
-        self.user_data = {'email': 'testuser@example.com', 'password': 'password123'}
+        self.user_data = {'username': 'testuser','email': 'test@test.com','password': 'password123'}
         self.user = User.objects.create_user(**self.user_data)
-        self.register_url = reverse('user-register') # Предполагаемый URL для регистрации
-        self.login_url = reverse('user-login')       # Предполагаемый URL для входа
-        self.profile_url = reverse('user-profile', kwargs={'pk': self.user.pk}) # Предполагаемый URL профиля
+        self.register_url = reverse('register')
+        self.login_url = reverse('token_obtain_pair')
+        self.profile_url = reverse('profile')
 
     def test_user_registration(self):
         """Тестирование успешной регистрации пользователя."""
         url = self.register_url
-        data = {'email': 'newuser@example.com', 'password': 'newpassword456'}
+        data = {
+            "username": "newuser",
+            "email": "new@example.com",
+            "password": "StrongPassword123!"
+        }
         response = self.client.post(url, data, format='json')
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -31,12 +35,15 @@ class UserTests(APITestCase):
     def test_user_registration_duplicate_email(self):
         """Тестирование регистрации с уже существующей почтой."""
         url = self.register_url
-        data = {'email': self.user_data['email'], 'password': 'anotherpassword'}
+        data = {
+            'username': 'another_user',
+            'email': self.user_data['email'],
+            'password': 'anotherpassword'
+        }
         response = self.client.post(url, data, format='json')
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
-        self.assertEqual(User.objects.count(), 1) # Количество пользователей не изменилось
+        self.assertEqual(User.objects.filter(email=self.user_data['email']).count(), 1)
 
     def test_user_login(self):
         """Тестирование успешного входа пользователя."""
@@ -50,9 +57,10 @@ class UserTests(APITestCase):
     def test_user_login_invalid_credentials(self):
         """Тестирование входа с неверными учетными данными."""
         url = self.login_url
-        invalid_data = {'email': 'testuser@example.com', 'password': 'wrongpassword'}
+        invalid_data = {'username': 'testuser', 'password': 'wrongpassword'}
         response = self.client.post(url, invalid_data, format='json')
 
+        # Теперь SimpleJWT должен вернуть 401 (неверные учетные данные), а не 400
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertNotIn('access', response.data)
 
@@ -90,9 +98,12 @@ class UserTests(APITestCase):
 
     def test_user_profile_update_other_user(self):
         """Тестирование попытки обновить профиль другого пользователя."""
-        other_user_data = {'email': 'other@example.com', 'password': 'password456'}
-        other_user = User.objects.create_user(**other_user_data)
-        other_profile_url = reverse('user-profile', kwargs={'pk': other_user.pk})
+        other_user = User.objects.create_user(
+            username='other_guy',
+            email='other@guy.com',
+            password='password123'
+        )
+        other_profile_url = reverse('users:user-profile', kwargs={'pk': other_user.pk})
 
         self.client.force_authenticate(user=self.user)
         new_data = {'email': 'hacked@example.com'}

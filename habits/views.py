@@ -2,7 +2,6 @@ from rest_framework import viewsets, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-
 from .models import Habit
 from .serializers import HabitSerializer, PublicHabitSerializer
 
@@ -41,43 +40,43 @@ class HabitViewSet(viewsets.ModelViewSet):
         serializer.save(user=self.request.user)
 
 
-@action(detail=True, methods=['post'])
-def mark_done(self):
-    # self.get_object() уже получает объект Habit, отфильтрованный по текущему пользователю
-    habit = self.get_object() # <-- habit теперь используется
+    @action(detail=True, methods=['post'])
+    def mark_done(self):
+        # self.get_object() уже получает объект Habit, отфильтрованный по текущему пользователю
+        habit = self.get_object() # <-- habit теперь используется
 
-    # Логика отметки привычки как выполненной
-    # Например, обновление поля last_done, или счетчика streak
-    # Для примера, просто обновим 'last_done' на текущую дату (или время)
-    # Если у вас есть поле last_done в модели Habit:
-    try:
-        # Импортируйте datetime, если еще не сделали этого в начале файла:
-        # from datetime import datetime
-        from django.utils import timezone # Лучше использовать timezone для работы с датами в Django
+        # Логика отметки привычки как выполненной
+        # Например, обновление поля last_done, или счетчика streak
+        # Для примера, просто обновим 'last_done' на текущую дату (или время)
+        # Если у вас есть поле last_done в модели Habit:
+        try:
+            # Импортируйте datetime, если еще не сделали этого в начале файла:
+            # from datetime import datetime
+            from django.utils import timezone # Лучше использовать timezone для работы с датами в Django
 
-        habit.last_done = timezone.now() # Обновляем дату последнего выполнения
-        # Если у вас есть поле streak, вы можете его увеличить:
-        # habit.streak += 1
-        habit.save()
-        return Response({'status': 'habit marked as done', 'habit_id': habit.id})
-    except Exception as e:
-        return Response({'error': str(e)}, status=400)
+            habit.last_done = timezone.now() # Обновляем дату последнего выполнения
+            # Если у вас есть поле streak, вы можете его увеличить:
+            # habit.streak += 1
+            habit.save()
+            return Response({'status': 'habit marked as done', 'habit_id': habit.id})
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
 
 
-@action(detail=False, permission_classes=[permissions.AllowAny])
-def public(self, request): # <-- request теперь используется
-    queryset = Habit.objects.filter(is_public=True)
-    page = self.paginate_queryset(queryset)
+    @action(detail=False, permission_classes=[permissions.AllowAny])
+    def public(self, request): # <-- request теперь используется
+        queryset = Habit.objects.filter(is_public=True)
+        page = self.paginate_queryset(queryset)
 
-    if page is not None:
-        # context={'request': request} является хорошей практикой,
-        # если сериализатор может использовать request (например, для генерации URL)
-        serializer = PublicHabitSerializer(page, many=True, context={'request': request})
-        return self.get_paginated_response(serializer.data)
+        if page is not None:
+            # context={'request': request} является хорошей практикой,
+            # если сериализатор может использовать request (например, для генерации URL)
+            serializer = PublicHabitSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
 
-    # Если пагинация не используется (что маловероятно с PageNumberPagination,
-    # но допустимо, если page_size=None или таких запросов нет)
-    serializer = PublicHabitSerializer(queryset, many=True, context={'request': request})
-    return Response(serializer.data)
+        # Если пагинация не используется (что маловероятно с PageNumberPagination,
+        # но допустимо, если page_size=None или таких запросов нет)
+        serializer = PublicHabitSerializer(queryset, many=True, context={'request': request})
+        return Response(serializer.data)
 
 

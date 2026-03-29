@@ -4,37 +4,29 @@ from django.core.exceptions import ValidationError
 
 
 class Habit(models.Model):
-    objects = None
-    DoesNotExist = None
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='habits')
-    action = models.CharField(max_length=255, verbose_name="Действие") # Пример verbose_name
-    time = models.TimeField(verbose_name="Время") # Пример verbose_name
+    action = models.CharField(max_length=255, verbose_name="Действие")
+    place = models.CharField(max_length=255, verbose_name="Место", default="Дом")  # Добавлено
+    time = models.TimeField(verbose_name="Время")
+    is_pleasant = models.BooleanField(default=False, verbose_name="Приятная привычка")  # Добавлено
 
     related_habit = models.ForeignKey(
-        'self',
-        on_delete=models.SET_NULL,
-        related_name='related_habits',
-        null=True,
-        blank=True,
-        verbose_name="Связанная привычка" # Пример verbose_name
+        'self', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='related_habits', verbose_name="Связанная привычка"
     )
-    periodicity_days = models.PositiveIntegerField(verbose_name="Дней периодичности") # Например, 1 (ежедневно), 7 (еженедельно)
-    execution_time_seconds = models.PositiveIntegerField(verbose_name="Время на выполнение (сек)") # Время на выполнение привычки в секундах
-    is_public = models.BooleanField(default=False, verbose_name="Публичная") # Видимость привычки
-    last_done = models.DateTimeField(null=True, blank=True, verbose_name="Последнее выполнение") # Кагда была выполнена в последний раз
-    streak = models.PositiveIntegerField(default=0, verbose_name="Серия") # Текущая серия выполнения
+    periodicity_days = models.PositiveIntegerField(default=1, verbose_name="Дней периодичности")
+    execution_time_seconds = models.PositiveIntegerField(verbose_name="Время на выполнение (сек)")
+    is_public = models.BooleanField(default=False, verbose_name="Публичная")
+    last_done = models.DateTimeField(null=True, blank=True)
+    streak = models.PositiveIntegerField(default=0)
 
     class Meta:
-        # Пример дополнительных настроек метаданных
         verbose_name = "Привычка"
         verbose_name_plural = "Привычки"
-        ordering = ['time'] # Пример сортировки
+        ordering = ['time']
 
     def __str__(self):
-        """
-        Возвращает строковое представление объекта Habit.
-        """
-        return f'{self.action} в {self.time.strftime("%H:%M")}' # Более красивое форматирование времени
+        return f'{self.action} в {self.time}'
 
     def clean(self):
         """
