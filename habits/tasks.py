@@ -1,10 +1,39 @@
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.utils import timezone
+from telegram import Bot
+from telegram.error import TelegramError
+
+from habit_tracker import settings
 from .models import Habit
 import logging
 
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
+
+# Инициализация бота. Лучше делать это здесь, чтобы избежать повторных инициализаций
+# при каждом вызове задачи, но убедитесь, что settings.py доступен.
+try:
+    bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
+except Exception as e:
+    logger.error(f"Не удалось инициализировать Telegram Bot: {e}. Убедитесь, что TELEGRAM_BOT_TOKEN установлен в settings.py.")
+    bot = None # Устанавливаем в None, чтобы задачи с Telegram не падали, если токен не задан
+
+def send_tg_message(user_id: int, text: str):
+    """Вспомогательная функция для отправки сообщения в Telegram."""
+    if bot:
+        try:
+            bot.send_message(chat_id=user_id, text=text)
+            logger.info(f"Сообщение отправлено пользователю {user_id}: {text[:50]}...")
+            return True
+        except TelegramError as e:
+            logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
+            return False
+    else:
+        logger.warning(f"Telegram Bot не инициализирован. Невозможно отправить сообщение пользователю {user_id}.")
+        return False
+
 
 
 @shared_task

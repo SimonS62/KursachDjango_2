@@ -11,20 +11,12 @@ from telegram_bot.views import TelegramWebhookView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    # Привычки
-    path('api/', include('habits.urls')),
+    path('api/v1/users/', include('users.urls')),
+    path('api/v1/habits/', include('habits.urls')),
 
     # DRF browsable API
     path('api/auth/', include('rest_framework.urls')),
 
-    # JWT аутентификация
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-
-    # Пользователи
-    path('api/register/', UserRegistrationView.as_view(), name='register'),
-    path('api/profile/', UserProfileView.as_view(), name='profile'),  # Добавлен
 
     # Документация
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -33,5 +25,7 @@ urlpatterns = [
 
     # Телеграм
     path('telegram/webhook/', TelegramWebhookView.as_view(), name='telegram-webhook'),
+
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
 ]
 

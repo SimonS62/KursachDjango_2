@@ -52,5 +52,3 @@ class TelegramBotTests(APITestCase):
         }
         response = self.client.post(self.webhook_url, telegram_callback, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-

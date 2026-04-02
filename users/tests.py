@@ -9,11 +9,11 @@ class UserTests(APITestCase):
 
     def setUp(self):
         """Настройка тестового окружения."""
-        self.user_data = {'username': 'testuser','email': 'test@test.com','password': 'password123'}
+        self.user_data = {'username': 'testuser', 'email': 'test@test.com', 'password': 'password123'}
         self.user = User.objects.create_user(**self.user_data)
-        self.register_url = reverse('register')
+        self.register_url = reverse('users:register')
         self.login_url = reverse('token_obtain_pair')
-        self.profile_url = reverse('profile')
+        self.profile_url = reverse('users:user-profile')
 
     def test_user_registration(self):
         """Тестирование успешной регистрации пользователя."""
@@ -112,4 +112,3 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN) # Или 404, зависит от реализации
         other_user.refresh_from_db()
         self.assertEqual(other_user.email, 'other@example.com') # Email не изменился
-

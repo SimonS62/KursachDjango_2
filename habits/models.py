@@ -14,6 +14,8 @@ class Habit(models.Model):
         'self', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='related_habits', verbose_name="Связанная привычка"
     )
+    reward = models.CharField(max_length=255, null=True, blank=True)
+    last_completed = models.DateField(null=True, blank=True)
     periodicity_days = models.PositiveIntegerField(default=1, verbose_name="Дней периодичности")
     execution_time_seconds = models.PositiveIntegerField(verbose_name="Время на выполнение (сек)")
     is_public = models.BooleanField(default=False, verbose_name="Публичная")
@@ -25,25 +27,28 @@ class Habit(models.Model):
         verbose_name_plural = "Привычки"
         ordering = ['time']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.associated_habit = None
+        self.periodicity = None
+
     def __str__(self):
         return f'{self.action} в {self.time}'
 
     def clean(self):
-        """
-        Метод для дополнительной валидации полей модели.
-        """
-        # Эта проверка может быть на строке 70 в вашем коде, если здесь используется 'self'
-        if self.related_habit and self.related_habit == self:
-             raise ValidationError("Связанная привычка не может быть самой собой.")
+        super().clean()
+        # Валидируем время выполнения (не более 120 секунд)
+        if self.time and self.time.total_seconds() > 120:
+            raise ValidationError('Время выполнения привычки не может превышать 120 секунд.')
+    
+        # Валидируем периодичность (от 1 до 7 дней)
+        if self.periodicity is not None and not (1 <= self.periodicity <= 7):
+            raise ValidationError('Периодичность должна быть от 1 до 7 дней.')
+    
+        # Валидируем, что связанная привычка не является текущей (если она есть)
+        if self.associated_habit and self.associated_habit == self:
+             raise ValidationError('Связанная привычка не может быть самой собой.')
 
-        if self.execution_time_seconds > 120:
-            raise ValidationError(
-                "Время выполнения должно быть не более 120 секунд."
-            )
-
-        # Пример другой валидации:
-        # if self.user and self.is_public and self.related_habit:
-        #     raise ValidationError("Публичные привычки не могут иметь связанных привычек.")
 
     def save(self, *args, **kwargs):
         """

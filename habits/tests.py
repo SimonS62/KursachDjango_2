@@ -60,7 +60,7 @@ class HabitTests(APITestCase):
         self.log_create_url = lambda habit_id: reverse('habit-log-create', kwargs={'habit_id': habit_id})
         self.public_list_url = reverse('habit-public-list')
 
-    def test_habit_creation(self):
+    def test_initial_habit_data_setup(self):
         """Тестирование создания новой привычки."""
         self.assertEqual(Habit.objects.count(), 3)
         self.assertEqual(self.habit1.owner, self.user1)
@@ -70,16 +70,21 @@ class HabitTests(APITestCase):
         """Тестирование получения списка своих привычек."""
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # user1 должен видеть 2 свои привычки
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data), 2, f"Expected 2 habits in response data, got {len(response.data)}")
 
     def test_habit_list_other_user_habits_hidden(self):
         """Тестирование, что пользователь не видит чужие приватные привычки."""
         response = self.client.get(self.list_url)
-        user1_habit_ids = [h['id'] for h in response.data.get('results', response.data)]
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        habits_in_response = response.data.get('results', response.data)
+        user1_habit_ids = [h['id'] for h in habits_in_response]
 
         # Привычка user2 (private) не должна быть в списке user1
-        self.assertNotIn(self.habit3.id, user1_habit_ids)
+        self.assertNotIn(self.habit3.id, user1_habit_ids, "User1 should not see User2's private habit.")
+
+        # Дополнительная проверка: User1 видит свои привычки
+        self.assertIn(self.habit1.id, user1_habit_ids, "User1 should see their own private habit.")
+        self.assertIn(self.habit2.id, user1_habit_ids, "User1 should see their own public habit.")
 
     def test_habit_retrieve_detail(self):
         """Тестирование получения деталей одной привычки."""
