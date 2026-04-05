@@ -35,6 +35,6 @@ class PublicHabitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Habit
         fields = [
-            'id', 'action', 'time', 'location',
+            'id', 'action', 'time', 'place',
             'is_pleasant', 'periodicity', 'duration'
         ]

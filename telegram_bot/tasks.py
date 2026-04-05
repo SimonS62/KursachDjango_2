@@ -9,6 +9,7 @@ from django.utils import timezone
 
 bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
 
+
 @shared_task
 def send_habit_reminder(habit_id):
     """
@@ -21,7 +22,7 @@ def send_habit_reminder(habit_id):
         bot = Bot(token=settings.TELEGRAM_BOT_TOKEN)
     except Exception as e:
         print(f"Error initializing Telegram bot: {e}")
-        return # Не можем продолжить без бота
+        return
 
     try:
         # --- Внешний блок try для получения данных ---
@@ -57,6 +58,7 @@ def send_habit_reminder(habit_id):
     except Exception as e:
         # Обработка других неожиданных ошибок (например, проблемы с БД при получении Habit/TelegramUser)
         print(f"An unexpected error occurred while processing habit {habit_id}: {e}")
+
 
 @shared_task
 def schedule_reminders():

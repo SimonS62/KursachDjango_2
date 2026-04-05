@@ -8,7 +8,8 @@ app = Celery('habit_tracker')
 
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-app.autodiscover_tasks() # Автоматически ищет задачи в приложениях
+app.autodiscover_tasks()
+
 
 @app.task(bind=True)
 def debug_task(self):

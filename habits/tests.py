@@ -27,7 +27,7 @@ class HabitTests(APITestCase):
             action='Утренняя зарядка',
             time='08:00:00',
             execution_time_seconds=60,
-            periodicity_days=1,
+            periodicity=1,
         )
 
         self.habit2 = Habit.objects.create(
@@ -36,7 +36,7 @@ class HabitTests(APITestCase):
             place='Кровать',
             time='21:00:00',
             execution_time_seconds=120,
-            periodicity_days=7,
+            periodicity=1,
             is_public=True,
             is_pleasant=False
         )
@@ -47,7 +47,7 @@ class HabitTests(APITestCase):
             place='Зал',
             time='12:00:00',
             execution_time_seconds=30,
-            periodicity_days=1,
+            periodicity=1,
             is_public=False,
             is_pleasant=True
         )
@@ -63,7 +63,7 @@ class HabitTests(APITestCase):
     def test_initial_habit_data_setup(self):
         """Тестирование создания новой привычки."""
         self.assertEqual(Habit.objects.count(), 3)
-        self.assertEqual(self.habit1.owner, self.user1)
+        self.assertEqual(self.habit1.user, self.user1)
         self.assertEqual(self.habit1.action, 'Утренняя зарядка')
 
     def test_habit_list_own(self):

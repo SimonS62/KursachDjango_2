@@ -3,7 +3,6 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from telegram import Bot
 from telegram.error import TelegramError
-
 from habit_tracker import settings
 from .models import Habit
 import logging
@@ -20,6 +19,7 @@ except Exception as e:
     logger.error(f"Не удалось инициализировать Telegram Bot: {e}. Убедитесь, что TELEGRAM_BOT_TOKEN установлен в settings.py.")
     bot = None # Устанавливаем в None, чтобы задачи с Telegram не падали, если токен не задан
 
+
 def send_tg_message(user_id: int, text: str):
     """Вспомогательная функция для отправки сообщения в Telegram."""
     if bot:
@@ -33,8 +33,6 @@ def send_tg_message(user_id: int, text: str):
     else:
         logger.warning(f"Telegram Bot не инициализирован. Невозможно отправить сообщение пользователю {user_id}.")
         return False
-
-
 
 @shared_task
 def send_habit_reminder():
