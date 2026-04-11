@@ -12,12 +12,27 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'username', 'email', 'password', 'first_name', 'last_name')
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer): # Или как называется ваш сериализатор для регистрации
+    password = serializers.CharField(write_only=True, required=True, min_length=8) # Пример
+
     class Meta:
         model = User
-        fields = ['username', 'password', 'email']
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('username', 'email', 'password')
+        extra_kwargs = {
+            'email': {
+                'required': True,
+                'validators': [UniqueValidator(queryset=User.objects.all(), message='Пользователь с таким email уже существует.')]
+            },
+            'username': {
+                'required': True,
+                'validators': [UniqueValidator(queryset=User.objects.all(), message='Пользователь с таким именем уже существует.')]
+            }
+        }
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password']
+        )
         return user
