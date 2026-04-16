@@ -1,0 +1,81 @@
+services:
+  # Сервис для базы данных PostgreSQL
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # Сервис для Django бэкенда
+  backend:
+    build: .
+    command: gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
+    ports:
+      - "8000:8000" # Внешний порт:Внутренний порт
+    depends_on:
+      - db
+      - redis
+    environment:
+      # Переменные окружения для Django приложения
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - .:/app
+
+  # Сервис для Celery
+  celery:
+    build: .
+    command: celery -A habit_tracker worker -l info --concurrency 1
+    depends_on:
+      - db
+      - redis
+      - backend
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - .:/app
+
+  # Сервис для Celery Beat (планировщик задач)
+  celerybeat:
+    build: .
+    command: celery -A habit_tracker beat -l info --scheduler django_celery_beat.schedulers.DatabaseScheduler # Команда запуска Celery Beat
+    depends_on:
+      - db
+      - redis
+      - backend
+      - celery
+    environment:
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - .:/app
