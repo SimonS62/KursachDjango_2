@@ -1,7 +1,7 @@
 services:
   # Сервис для базы данных PostgreSQL
   db:
-    image: postgres:13
+    image: postgres:latest
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USER}
@@ -17,7 +17,7 @@ services:
   # Сервис для Django бэкенда
   backend:
     build: .
-    command: gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000
+    command: bash -c "python manage.py migrate && exec gunicorn habit_tracker.wsgi:application --bind 0.0.0.0:8000"
     ports:
       - "8000:8000" # Внешний порт:Внутренний порт
     depends_on:
